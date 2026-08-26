@@ -11,7 +11,7 @@ A lightweight form library for PocketMine-MP 5
 | Author | MengBao |
 
 ## English
-MEBForms is a **library-only plugin** that wraps PocketMine-MP's native `Form` interface into three ready-to-use form classes. It registers no commands and listens for no events. Installing it does exactly one thing: let your plugin open a GUI window in a few lines of code.
+MEBForms is a **library-only plugin** that wraps PocketMine-MP's native `Form` interface into three ready-to-use form classes. It registers no commands and listens for no events. Let your plugin open a GUI window in a few lines of code.
 
 No DEVirion, no libasynql, no Composer. `load: STARTUP` makes sure it loads before regular plugins, so anything depending on it always finds the classes.
 
@@ -125,7 +125,7 @@ A modal form has no close button — pressing ESC is the same as clicking the se
 
 ## 中文
 
-MEBForms 是一个**纯类库插件**，把 PocketMine-MP 的原生 `Form` 接口包装成三个开箱即用的表单类。它自己不注册任何指令、不监听任何事件，装上去就只做一件事：让你的插件用几行代码弹出 GUI 窗口。
+MEBForms 是一个**纯类库插件**，把 PocketMine-MP 的原生 `Form` 接口包装成三个开箱即用的表单类。它自己不注册任何指令、不监听任何事件，让你的插件用几行代码弹出 GUI 窗口。
 
 不需要 DEVirion，不需要 libasynql，不需要 Composer。`load: STARTUP` 保证它先于普通插件加载，依赖它的插件不会拿不到类。
 
@@ -228,7 +228,7 @@ $player->sendForm($form);
 
 确认框没有关闭按钮，玩家按 ESC 等同于点了第二个按钮，所以 `ModalForm` 的回调可以直接把参数标成 `bool`。
 
-### 备注
+### 提示
 
 - 按钮文字和内容都支持 `§` 颜色码和 `\n` 换行。
 - 图标参数：`0` = 材质路径（如 `textures/ui/accept`），`1` = 网络 URL，`-1` = 不要图标。
