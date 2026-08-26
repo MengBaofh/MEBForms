@@ -1,5 +1,4 @@
 # MEBForms
-
 给 PocketMine-MP 5 的轻量表单库 · A lightweight form library for PocketMine-MP 5
 
 [中文](#中文) · [English](#english)
@@ -11,6 +10,117 @@
 | 依赖 / Dependencies | 无 / None |
 | 作者 / Author | MengBao |
 | 版本 / Version | 1.0.0 |
+
+## English
+MEBForms is a **library-only plugin** that wraps PocketMine-MP's native `Form` interface into three ready-to-use form classes. It registers no commands and listens for no events. Installing it does exactly one thing: let your plugin open a GUI window in a few lines of code.
+
+No DEVirion, no libasynql, no Composer. `load: STARTUP` makes sure it loads before regular plugins, so anything depending on it always finds the classes.
+
+### Why another form library
+
+Older libraries like FormAPI mostly stopped at API 3.x/4.x, and on PM5 they either error out or behave oddly. MEBForms is written directly against PM5's `pocketmine\form\Form` while keeping FormAPI's calling conventions (`addButton`, `addInput`, `imageType = -1` for no icon), so porting an old plugin needs almost no rethinking.
+
+It also handles a few things you actually run into:
+
+- **Closing the window with ESC** consistently passes `null` to your callback. No silently dropped events, no exceptions.
+- **Slider defaults** are clamped into `min`–`max`. An out-of-range default makes some clients skip rendering the slider entirely, which is a painful bug to track down.
+- **Dropdown / step slider default indices** are clamped to a valid range.
+- **Custom form responses are padded** to the element count. Some client versions don't send a value for `label`, and strictly validating the count would stop the whole callback from running, making the form look like it "does nothing when clicked". With padding, indexing by position never hits an undefined index.
+- Unexpected data throws `FormValidationException`, which the server logs instead of crashing.
+
+### The three form classes
+
+| Class | UI | Value passed to the callback |
+|---|---|---|
+| `SimpleForm` | A column of buttons, icons supported | Button index `int`, or the `label` string you specified |
+| `CustomForm` | Input / toggle / slider / dropdown / step slider | Array, indexed by the order elements were added |
+| `ModalForm` | Two-button confirmation dialog | `true` = first button, `false` = second |
+
+All extend `BaseForm` and share `setTitle()` and `setCallable()`.
+
+### Installation
+
+Drop `MEBForms` into `plugins/`, then declare the dependency in your own plugin's `plugin.yml`:
+
+```yaml
+depend: [MEBForms]
+```
+
+### Usage
+
+Button window:
+
+```php
+use MengBao\MEBForms\SimpleForm;
+
+$form = new SimpleForm(function(Player $player, $data): void {
+    if ($data === null) {
+        return; //player closed the window
+    }
+    match ($data) {
+        "shop"  => $player->sendMessage("Opening shop"),
+        "spawn" => $player->sendMessage("Teleporting to spawn"),
+        default => null,
+    };
+});
+$form->setTitle("§lMain Menu");
+$form->setContent("Pick an option");
+$form->addButton("Shop", 0, "textures/items/emerald", "shop");
+$form->addButton("Back to spawn", -1, "", "spawn");
+$player->sendForm($form);
+```
+
+Once you pass `addButton`'s fourth argument `label`, the callback receives that string instead of an index, so inserting a button in the middle doesn't force you to renumber the `match` arms. Without a `label` the callback receives the index, and matching on indices works just as well.
+
+Custom window:
+
+```php
+use MengBao\MEBForms\CustomForm;
+
+$form = new CustomForm(function(Player $player, $data): void {
+    if ($data === null) {
+        return;
+    }
+    //note: a label takes an index too and is always null, so later elements shift down
+    $name  = (string) $data[1];
+    $isPvp = (bool)   $data[2];
+    $size  = (float)  $data[3];
+    $mode  = (int)    $data[4]; //index of the selected option
+});
+$form->setTitle("Create claim");
+$form->addLabel("Fill in the claim details");
+$form->addInput("Claim name", "16 characters max");
+$form->addToggle("Allow PVP", false);
+$form->addSlider("Radius", 8, 128, 8, 32);
+$form->addDropdown("Type", ["Residential", "Commercial", "Farm"]);
+$player->sendForm($form);
+```
+
+Confirmation dialog:
+
+```php
+use MengBao\MEBForms\ModalForm;
+
+$form = new ModalForm(function(Player $player, bool $confirm): void {
+    if ($confirm) {
+        $player->sendMessage("Deleted");
+    }
+});
+$form->setTitle("Confirm deletion");
+$form->setContent("This cannot be undone. Are you sure?");
+$form->setButton1("§cDelete");
+$form->setButton2("Cancel");
+$player->sendForm($form);
+```
+
+A modal form has no close button — pressing ESC is the same as clicking the second button, so a `ModalForm` callback can type its parameter as `bool` directly.
+
+### Notes
+
+- Button text and content both support `§` color codes and `\n` line breaks.
+- Icon parameter: `0` = texture path (e.g. `textures/ui/accept`), `1` = web URL, `-1` = no icon.
+- Use `setCallable()` to reuse one form instance with a different callback.
+- `getButtonCount()` / `getElementCount()` are handy for keeping indices straight when building forms dynamically.
 
 ---
 
@@ -128,114 +238,3 @@ $player->sendForm($form);
 
 ---
 
-## English
-
-MEBForms is a **library-only plugin** that wraps PocketMine-MP's native `Form` interface into three ready-to-use form classes. It registers no commands and listens for no events. Installing it does exactly one thing: let your plugin open a GUI window in a few lines of code.
-
-No DEVirion, no libasynql, no Composer. `load: STARTUP` makes sure it loads before regular plugins, so anything depending on it always finds the classes.
-
-### Why another form library
-
-Older libraries like FormAPI mostly stopped at API 3.x/4.x, and on PM5 they either error out or behave oddly. MEBForms is written directly against PM5's `pocketmine\form\Form` while keeping FormAPI's calling conventions (`addButton`, `addInput`, `imageType = -1` for no icon), so porting an old plugin needs almost no rethinking.
-
-It also handles a few things you actually run into:
-
-- **Closing the window with ESC** consistently passes `null` to your callback. No silently dropped events, no exceptions.
-- **Slider defaults** are clamped into `min`–`max`. An out-of-range default makes some clients skip rendering the slider entirely, which is a painful bug to track down.
-- **Dropdown / step slider default indices** are clamped to a valid range.
-- **Custom form responses are padded** to the element count. Some client versions don't send a value for `label`, and strictly validating the count would stop the whole callback from running, making the form look like it "does nothing when clicked". With padding, indexing by position never hits an undefined index.
-- Unexpected data throws `FormValidationException`, which the server logs instead of crashing.
-
-### The three form classes
-
-| Class | UI | Value passed to the callback |
-|---|---|---|
-| `SimpleForm` | A column of buttons, icons supported | Button index `int`, or the `label` string you specified |
-| `CustomForm` | Input / toggle / slider / dropdown / step slider | Array, indexed by the order elements were added |
-| `ModalForm` | Two-button confirmation dialog | `true` = first button, `false` = second |
-
-All extend `BaseForm` and share `setTitle()` and `setCallable()`.
-
-### Installation
-
-Drop `MEBForms` into `plugins/`, then declare the dependency in your own plugin's `plugin.yml`:
-
-```yaml
-depend: [MEBForms]
-```
-
-### Usage
-
-Button window:
-
-```php
-use MengBao\MEBForms\SimpleForm;
-
-$form = new SimpleForm(function(Player $player, $data): void {
-    if ($data === null) {
-        return; //player closed the window
-    }
-    match ($data) {
-        "shop"  => $player->sendMessage("Opening shop"),
-        "spawn" => $player->sendMessage("Teleporting to spawn"),
-        default => null,
-    };
-});
-$form->setTitle("§lMain Menu");
-$form->setContent("Pick an option");
-$form->addButton("Shop", 0, "textures/items/emerald", "shop");
-$form->addButton("Back to spawn", -1, "", "spawn");
-$player->sendForm($form);
-```
-
-Once you pass `addButton`'s fourth argument `label`, the callback receives that string instead of an index, so inserting a button in the middle doesn't force you to renumber the `match` arms. Without a `label` the callback receives the index, and matching on indices works just as well.
-
-Custom window:
-
-```php
-use MengBao\MEBForms\CustomForm;
-
-$form = new CustomForm(function(Player $player, $data): void {
-    if ($data === null) {
-        return;
-    }
-    //note: a label takes an index too and is always null, so later elements shift down
-    $name  = (string) $data[1];
-    $isPvp = (bool)   $data[2];
-    $size  = (float)  $data[3];
-    $mode  = (int)    $data[4]; //index of the selected option
-});
-$form->setTitle("Create claim");
-$form->addLabel("Fill in the claim details");
-$form->addInput("Claim name", "16 characters max");
-$form->addToggle("Allow PVP", false);
-$form->addSlider("Radius", 8, 128, 8, 32);
-$form->addDropdown("Type", ["Residential", "Commercial", "Farm"]);
-$player->sendForm($form);
-```
-
-Confirmation dialog:
-
-```php
-use MengBao\MEBForms\ModalForm;
-
-$form = new ModalForm(function(Player $player, bool $confirm): void {
-    if ($confirm) {
-        $player->sendMessage("Deleted");
-    }
-});
-$form->setTitle("Confirm deletion");
-$form->setContent("This cannot be undone. Are you sure?");
-$form->setButton1("§cDelete");
-$form->setButton2("Cancel");
-$player->sendForm($form);
-```
-
-A modal form has no close button — pressing ESC is the same as clicking the second button, so a `ModalForm` callback can type its parameter as `bool` directly.
-
-### Notes
-
-- Button text and content both support `§` color codes and `\n` line breaks.
-- Icon parameter: `0` = texture path (e.g. `textures/ui/accept`), `1` = web URL, `-1` = no icon.
-- Use `setCallable()` to reuse one form instance with a different callback.
-- `getButtonCount()` / `getElementCount()` are handy for keeping indices straight when building forms dynamically.
