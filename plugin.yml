@@ -1,0 +1,9 @@
+name: MEBForms
+main: MengBao\MEBForms\Main
+version: 1.0.0
+api:
+- 5.0.0
+load: STARTUP
+author: MengBao
+website:
+description: A standalone GUI form library for MEB plugins. No dependencies.
