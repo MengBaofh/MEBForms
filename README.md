@@ -1,15 +1,14 @@
 # MEBForms
-给 PocketMine-MP 5 的轻量表单库 · A lightweight form library for PocketMine-MP 5
+A lightweight form library for PocketMine-MP 5
 
-[中文](#中文) · [English](#english)
+[English](#english) · [中文](#中文)
 
 | | |
 |---|---|
 | API | `5.0.0` |
 | Load | `STARTUP` |
-| 依赖 / Dependencies | 无 / None |
-| 作者 / Author | MengBao |
-| 版本 / Version | 1.0.0 |
+| Dependencies | None |
+| Author | MengBao |
 
 ## English
 MEBForms is a **library-only plugin** that wraps PocketMine-MP's native `Form` interface into three ready-to-use form classes. It registers no commands and listens for no events. Installing it does exactly one thing: let your plugin open a GUI window in a few lines of code.
